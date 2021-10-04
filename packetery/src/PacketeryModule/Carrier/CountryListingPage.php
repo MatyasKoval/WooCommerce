@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace PacketeryModule\Carrier;
 
 use PacketeryLatte\Engine;
+use PacketeryModule\Checkout;
 use PacketeryNette\Http\Request;
 
 /**
@@ -109,10 +110,12 @@ class CountryListingPage {
 
 		$countriesFinal = [];
 		foreach ( $countries as $country ) {
+			$activeCarriers   = $this->getActiveCarriersNamesByCountry( $country );
 			$countriesFinal[] = [
-				'code' => $country,
-				'name' => \Locale::getDisplayRegion( '-' . $country, get_locale() ),
-				'url'  => get_admin_url( null, 'admin.php?page=packeta-country&code=' . $country ),
+				'code'           => $country,
+				'name'           => \Locale::getDisplayRegion( '-' . $country, get_locale() ),
+				'url'            => get_admin_url( null, 'admin.php?page=packeta-country&code=' . $country ),
+				'activeCarriers' => $activeCarriers,
 			];
 		}
 
@@ -143,4 +146,24 @@ class CountryListingPage {
 		return $countriesFinal;
 	}
 
+	/**
+	 * Gets array of active carriers names by country code.
+	 *
+	 * @param string $countryCode Country code.
+	 *
+	 * @return array
+	 */
+	private function getActiveCarriersNamesByCountry( string $countryCode ): array {
+		$activeCarriers  = [];
+		$countryCarriers = $this->carrierRepository->getByCountry( $countryCode );
+		foreach ( $countryCarriers as $carrierData ) {
+			$optionId       = Checkout::CARRIER_PREFIX . $carrierData['id'];
+			$carrierOptions = get_option( $optionId );
+			if ( $carrierOptions['active'] ) {
+				$activeCarriers[] = $carrierData['name'];
+			}
+		}
+
+		return $activeCarriers;
+	}
 }
