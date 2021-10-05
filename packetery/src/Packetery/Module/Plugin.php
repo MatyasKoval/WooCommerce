@@ -189,11 +189,26 @@ class Plugin {
 	}
 
 	/**
+	 * Creates WordPress REST API nonce to avoid CSRF.
+	 *
+	 * @return string
+	 */
+	public static function getApiNonce(): string {
+		static $nonce;
+		if ( ! $nonce ) {
+			$nonce = wp_create_nonce( 'wp_rest' );
+		}
+
+		return $nonce;
+	}
+
+	/**
 	 * Method to register hooks
 	 */
 	public function run(): void {
 		add_action( 'init', array( $this, 'loadTranslation' ), 1 );
 		add_action( 'init', [ $this->logger, 'register' ], 5 );
+		add_action( 'rest_api_init', [ $this->orderController, 'registerRoutes' ] );
 
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueueAdminAssets' ) );
 		add_action(
