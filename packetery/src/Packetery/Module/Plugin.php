@@ -137,6 +137,13 @@ class Plugin {
 	private $logger;
 
 	/**
+	 * Order controller.
+	 *
+	 * @var Order\Controller
+	 */
+	private $orderController;
+
+	/**
 	 * Plugin constructor.
 	 *
 	 * @param Order\Metabox      $order_metabox      Order metabox.
@@ -153,6 +160,7 @@ class Plugin {
 	 * @param Product\DataTab    $productTab         Product tab.
 	 * @param Log\Page           $logPage            Log page.
 	 * @param ILogger            $logger             Log manager.
+	 * @param Order\Controller   $orderController    Order controller.
 	 */
 	public function __construct(
 		Order\Metabox $order_metabox,
@@ -168,7 +176,8 @@ class Plugin {
 		Order\GridExtender $gridExtender,
 		Product\DataTab $productTab,
 		Log\Page $logPage,
-		ILogger $logger
+		ILogger $logger,
+		Order\Controller $orderController
 	) {
 		$this->options_page       = $options_page;
 		$this->latte_engine       = $latte_engine;
@@ -186,6 +195,7 @@ class Plugin {
 		$this->productTab         = $productTab;
 		$this->logPage            = $logPage;
 		$this->logger             = $logger;
+		$this->orderController    = $orderController;
 	}
 
 	/**
@@ -236,14 +246,20 @@ class Plugin {
 
 		add_action( 'admin_menu', array( $this, 'add_menu_pages' ) );
 		add_action( 'admin_head', array( $this->labelPrint, 'hideFromMenus' ) );
-		add_action( 'admin_head', function () {
-			$nonce        = wp_create_nonce( 'wp_rest' );
-			$orderSaveUrl = $this->orderController->getRoute( '/save' );
-			$this->latte_engine->render( PACKETERY_PLUGIN_DIR . '/template/order/modal-template.latte', [
-				'nonce'        => $nonce,
-				'orderSaveUrl' => $orderSaveUrl,
-			] );
-		} );
+		add_action(
+			'admin_head',
+			function () {
+				$nonce        = wp_create_nonce( 'wp_rest' );
+				$orderSaveUrl = $this->orderController->getRoute( '/save' );
+				$this->latte_engine->render(
+					PACKETERY_PLUGIN_DIR . '/template/order/modal-template.latte',
+					[
+						'nonce'        => $nonce,
+						'orderSaveUrl' => $orderSaveUrl,
+					]
+				);
+			}
+		);
 		$this->order_metabox->register();
 
 		$this->checkout->register_hooks();
